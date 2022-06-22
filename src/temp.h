@@ -27,6 +27,7 @@ class TEMP
     TEMP();
     OneWire onewire;
     DallasTemperature dtemp;
+    SPIClass spi;
     File tempFile;
     
     void Setup();

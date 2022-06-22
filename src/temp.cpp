@@ -3,7 +3,8 @@
 //Hopefully have the same instances of the classes avalible?????
 //Need to figure out how to get this instance in the main file
 TEMP::TEMP() : onewire(ONE_WIRE_PIN),
-               dtemp(&onewire)
+               dtemp(&onewire),
+               spi(VSPI)
 {
 }
 
@@ -14,10 +15,12 @@ void TEMP::Setup()
   numBoot++;
   EEPROM.write(EEPROM_BOOT_COUNTER_LOCATION,numBoot);
   EEPROM.commit();
-
+  spi.begin(CLK_PIN, MISO_PIN, MOSI_PIN, CS_PIN);
   pinMode(CS_PIN, OUTPUT);
+  dtemp.begin();
+
   Serial.println("Initalizing the SD card...");
-  if (!SD.begin(CS_PIN))
+  if (!SD.begin(CS_PIN,spi,80000000))
   {
     Serial.println("SD Init Failed, try again");
   }
@@ -25,7 +28,7 @@ void TEMP::Setup()
   {
     Serial.println("SD Init Success!");
   }
-  // Only onen file can be open at a time, and make sure we don't do a bad thing
+  // Only one file can be open at a time, and make sure we don't do a bad thing
   Serial.println("Generating file header....");
   makeFileName(fileString, numBoot);
   tempFile = SD.open(fileString, FILE_WRITE);
