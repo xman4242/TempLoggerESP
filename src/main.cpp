@@ -17,7 +17,7 @@ void setup()
 
 void loop()
 {
-  //Temp Loop goes here??
+  //Do I want any loops here? Handle backgroud tasks or something idk
   delay(1);
   yield();
 }

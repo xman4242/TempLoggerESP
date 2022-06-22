@@ -8,6 +8,7 @@
 #include <FS.h>
 #include <SPI.h>
 #include <SD.h>
+#include <EEPROM.h>
 
 #define ONE_WIRE_PIN 2
 #define CS_PIN 33
@@ -15,6 +16,10 @@
 #define MOSI_PIN 26
 #define MISO_PIN 27
 #define SD_CS 15
+//CONFIG OPTIONS
+#define EEPROM_BOOT_COUNTER_LOCATION 10
+//Milliseconds to wait in between temperature readings
+#define READ_WAIT_MS 1000
 
 class TEMP
 { 
@@ -31,11 +36,13 @@ class TEMP
     String fileName = "temps";
     String fileType = ".csv";
     char fileString[30];
+    char buffer[300];
+    
 
   private:
       long _NextDisplayMillis = 0;
       long _NextTempMillis = 0;
-      double tempval[numberOfSensors];
+      double temperatureVal[numberOfSensors];
       int numBoot = 0;
 };
 
