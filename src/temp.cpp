@@ -71,14 +71,30 @@ void TEMP::Loop()
         else tempFile.printf("%lf,", temperatureVal[i]);
       }
       tempFile.printf("\n");
+      
     }
   }
 
   if(!prevOffButtonState && buttonState && isRunning) endLogging(100,10);
   prevButtonState = buttonState;
   prevOffButtonState = offButtonState;
-  //Display the current temperature, look into bmp image
+}
 
+void TEMP::displayLoop()
+{
+  if(_NextDisplayMillis < millis())
+  { 
+    _NextDisplayMillis += 200;
+    for (int i = 0; i < numberOfSensors; i++)
+    { 
+      sprintf(buffer,"Temp %d is: %.2lf",i,temperatureVal[i]);
+      String draw(buffer); 
+      screen.drawString(draw,0,0,2);
+      delay(MS_PER_TEMP);
+    }
+    screen.drawBitmap(0,0,img,135,240,TFT_RED);
+    delay(100);
+  }
 }
 
 void TEMP::makeFileName(char *buffer, int value)

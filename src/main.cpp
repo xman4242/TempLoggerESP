@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include "temp.h"
-//what kind of tasks do I want to haave?
 
 void TempTask(void *pvParameters);
 TEMP Temp;
@@ -8,16 +7,16 @@ TEMP Temp;
 void setup()
 {
   Serial.begin(115200);
-  //Other setup garbarge will go here, like temp task etc. 
   Temp.Setup();
   Serial.print("Main Loop: Executing on core ");
   Serial.println(xPortGetCoreID());
+  //Creates a task pinned to the second core to monitor the temps
   xTaskCreatePinnedToCore(TempTask, "Temp Task", 10000, NULL, 1, NULL, 1);
 }
 
 void loop()
 {
-  //Do I want any loops here? Handle backgroud tasks or something idk
+  //Do nothing but handle background ESP things on the main core
   delay(1);
   yield();
 }

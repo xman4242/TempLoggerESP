@@ -22,6 +22,7 @@
 #define EEPROM_BOOT_COUNTER_LOCATION 10
 //Milliseconds to wait in between temperature readings
 #define READ_WAIT_MS 1000
+#define MS_PER_TEMP 250
 
 class TEMP
 { 
@@ -38,6 +39,7 @@ class TEMP
     void initFile();
     void makeFileName(char* buffer, int value);
     void endLogging(int flashMS, int numFlash);
+    void displayLoop();
     const static int numberOfSensors = 2;
     String fileName = "temps";
     String fileType = ".csv";
