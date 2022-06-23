@@ -1,10 +1,6 @@
 #include "temp.h"
 
 //If something breaks, check the instances of your classes and whatnot
-//TODO:
-//Display programming
-//Match file output in the serial monitor?
-//Wrap some stuff into fancy functions, esp. stuff from the setup routine
 TEMP::TEMP() : onewire(ONE_WIRE_PIN),
                dtemp(&onewire),
                spi(VSPI),
