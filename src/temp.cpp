@@ -35,19 +35,21 @@ void TEMP::Setup()
   screen.fillScreen(TFT_BLACK);
   screen.setTextColor(TFT_RED, TFT_BLUE,true);
   screen.drawString("Press the button\nNext to the switch\nTo start ", 0, 0, 2); 
-
 }
 
 void TEMP::Loop()
 { 
-  //Use button 35 to start, button 0 to stop
+  //Use button 35 to start, button 0 to stop. Button 35 is by the power switch
   buttonState = digitalRead(35);
-
-  if((prevButtonState && !buttonState) || isRunning)
+  offButtonState = digitalRead(0);
+  
+  if((!prevButtonState && buttonState) || isRunning)
   { 
     if(!isRunning) 
-    {
+    { 
+      screen.drawString("Generating File\n......",0,0,2);
       initFile();
+      
       isRunning = true;
     }
 
@@ -72,8 +74,9 @@ void TEMP::Loop()
     }
   }
 
+  if(!prevOffButtonState && buttonState && isRunning) endLogging(100,10);
   prevButtonState = buttonState;
-  
+  prevOffButtonState = offButtonState;
   //Display the current temperature, look into bmp image
 
 }
@@ -112,4 +115,21 @@ void TEMP::initFile()
   tempFile.printf("\n");
   sprintf(buffer,"File %s has been made, starting the recording...",fileString);
   Serial.println(buffer);
+}
+
+void TEMP::endLogging(int flashMS, int numFlash)
+{
+  Serial.println("Logging Finished");
+  Serial.println("Closing file");
+  tempFile.close();
+  Serial.println("Shutting Down");
+  for (int i = 0; i < numFlash; i++)
+  {
+    screen.fillScreen(TFT_RED);
+    delay(flashMS);
+    screen.setTextColor(TFT_WHITE, TFT_RED,true);
+    screen.drawString("SHUTTING\nDOWN",0,0,2);
+    delay(flashMS);
+  }
+  ESP.restart();
 }

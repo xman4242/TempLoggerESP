@@ -37,6 +37,7 @@ class TEMP
     void Loop();
     void initFile();
     void makeFileName(char* buffer, int value);
+    void endLogging(int flashMS, int numFlash);
     const static int numberOfSensors = 2;
     String fileName = "temps";
     String fileType = ".csv";
@@ -51,8 +52,10 @@ class TEMP
       int numBoot = 0;
       bool buttonState = true;
       bool prevButtonState = false;
+      bool offButtonState = true;
+      bool prevOffButtonState = false;
       bool isRunning = false;
-
+    //This is the thermometer image, is the whole display at 135x240
     const unsigned char img [32400] PROGMEM = 
     {
 	    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
