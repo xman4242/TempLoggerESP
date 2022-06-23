@@ -9,6 +9,7 @@
 #include <SPI.h>
 #include <SD.h>
 #include <EEPROM.h>
+#include <TFT_eSPI.h>
 
 #define ONE_WIRE_PIN 2
 #define CS_PIN 33
@@ -32,6 +33,7 @@ class TEMP
     
     void Setup();
     void Loop();
+    void initFile();
     void makeFileName(char* buffer, int value);
     const static int numberOfSensors = 2;
     String fileName = "temps";

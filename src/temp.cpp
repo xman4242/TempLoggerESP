@@ -1,7 +1,10 @@
 #include "temp.h"
 
-// Hopefully have the same instances of the classes avalible?????
-// Need to figure out how to get this instance in the main file
+//If something breaks, check the instances of your classes and whatnot
+//TODO:
+//Display programming
+//Match file output in the serial monitor?
+//Wrap some stuff into fancy functions, esp. stuff from the setup routine
 TEMP::TEMP() : onewire(ONE_WIRE_PIN),
                dtemp(&onewire),
                spi(VSPI)
@@ -28,13 +31,7 @@ void TEMP::Setup()
   {
     Serial.println("SD Init Success!");
   }
-  // Only one file can be open at a time, and make sure we don't do a bad thing
-  Serial.println("Generating file header....");
-  makeFileName(fileString, numBoot);
-  tempFile = SD.open(fileString, FILE_WRITE);
-  tempFile.println("Millis Since Start,Probe 0, Probe 1");
-  tempFile.println("(ms),(Deg F), (Deg F)");
-  Serial.println("Starting the Recording...");
+  initFile();
 }
 
 void TEMP::Loop()
@@ -49,16 +46,45 @@ void TEMP::Loop()
     }
 
     // put it in the csv file
-    tempFile.printf("%ld,", _NextTempMillis - READ_WAIT_MS);
+    tempFile.printf("%ld,", long(_NextTempMillis - READ_WAIT_MS));
     for (int i = 0; i < numberOfSensors; i++)
-    {
-      tempFile.printf("%lf,", temperatureVal[i]);
+    { 
+      //We need to make sure we don't have extra commas
+      if(i-1 == numberOfSensors) tempFile.printf("%lf", temperatureVal[i]);
+      else tempFile.printf("%lf,", temperatureVal[i]);
     }
     tempFile.printf("\n");
   }
+  //Display the current temperature, look into bmp image
 }
 
 void TEMP::makeFileName(char *buffer, int value)
 {
   sprintf(buffer, "temperatures%d.csv", value);
+}
+
+void TEMP::initFile()
+{
+  // Only one file can be open at a time, and make sure we don't do a bad thing
+  Serial.println("Generating file header....");
+  makeFileName(fileString, numBoot);
+
+  tempFile = SD.open(fileString, FILE_WRITE);
+  tempFile.printf("Millis Since Start,");
+
+  for (int i = 0; i < numberOfSensors; i++)
+  {
+    if(i-1 == numberOfSensors) tempFile.printf("Probe %d",i);
+    else tempFile.printf("Probe %d",i);
+  }
+  tempFile.printf("\n (ms),");
+
+  for (int i = 0; i < numberOfSensors; i++)
+  {
+    if(i-1 == numberOfSensors) tempFile.printf("(Deg F)");
+    else tempFile.printf("(Deg F),");
+  }
+  tempFile.printf("\n");
+  sprintf(buffer,"File %s has been made, starting the recording...",fileString);
+  Serial.println(buffer);
 }
