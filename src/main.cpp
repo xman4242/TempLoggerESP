@@ -12,24 +12,28 @@ void setup()
   Serial.print("Main Loop: Executing on core ");
   Serial.println(xPortGetCoreID());
   //Creates a task pinned to the second core to monitor the temps and one pinned to the first core to monitor the display
-  xTaskCreatePinnedToCore(DisplayTask,"Display Task",10000,NULL,1,NULL,0);
+  xTaskCreatePinnedToCore(DisplayTask,"Display Task",10000,NULL,1,NULL,1);
   xTaskCreatePinnedToCore(TempTask, "Temp Task", 10000, NULL, 1, NULL, 1);
 }
 
 void loop()
 {
   //Do nothing but handle background ESP things on the main core
-  delay(1);
+  vTaskDelay(10);
   yield();
 }
 
 void DisplayTask(void *pvParameters)
 {
-  Serial.println("Display Task: Executing on core ");
+  Serial.print("Display Task: Executing on core ");
   Serial.println(xPortGetCoreID());
   while(true)
-  {
-    Temp.displayLoop();
+  { 
+    if(Temp.isRunning && !Temp.shuttingDown) 
+    {
+      Temp.displayLoop();
+    }
+    delay(1);
   }
 }
 
@@ -41,5 +45,6 @@ void TempTask(void *pvParameters)
     while (true)
     {
       Temp.Loop();
+      delay(1);
     }
 }
