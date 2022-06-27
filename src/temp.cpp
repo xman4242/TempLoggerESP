@@ -57,16 +57,16 @@ void TEMP::Loop()
   { 
     if(!isRunning) 
     {  
+      initFile();
       screen.fillScreen(TFT_BLACK);
       screen.setTextColor(TFT_GREEN);
       screen.drawString("Generating",0,0,2);
-      screen.drawString ("File.....",0,30,2);
+      screen.drawString (fileString,0,30,2);
       screen.drawBitmap(120,0,csvImg,120,135,TFT_GREEN);
       delay(300);
-      initFile();
       isRunning = true;
     }
-
+    displayLoop();
     // Get the temp sensor data
     if (_NextTempMillis <= millis())
     {
@@ -98,7 +98,7 @@ void TEMP::Loop()
 }
 
 void TEMP::displayLoop()
-{ 
+{   
   if(_NextDisplayMillis < millis())
   {
     _NextDisplayMillis = millis() + 1000;
@@ -125,8 +125,13 @@ void TEMP::initFile()
 { 
   //Init the SD card and open the file for data logging
   while(!SD.begin(CS_PIN, spi))
-  {
-    
+  {  
+    screen.fillScreen(TFT_BLACK);
+    screen.setTextColor(TFT_YELLOW);
+    screen.drawString("SD FAILED",0,0,2); 
+    screen.drawString ("Retrying...",0,30,2);
+    screen.drawBitmap(120,0,sdImg,120,135,TFT_YELLOW);
+    delay(100); 
   }
   //if (!SD.begin(CS_PIN, spi,80000000)) Serial.println("SD Init Failed, try again");
   //else Serial.println("SD Init Success!");
