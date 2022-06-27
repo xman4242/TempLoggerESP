@@ -32,8 +32,8 @@ void DisplayTask(void *pvParameters)
     if(Temp.isRunning && !Temp.shuttingDown) 
     {
       Temp.displayLoop();
+      delay(1);
     }
-    delay(1);
   }
 }
 
