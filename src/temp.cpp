@@ -9,7 +9,8 @@ TEMP::TEMP() : onewire(ONE_WIRE_PIN),
 }
 
 void TEMP::Setup()
-{ 
+{  
+  
   //Start the EEPROM and get the boot number of this cycle
   EEPROM.begin(sizeof(int));
   numBoot = EEPROM.read(EEPROM_BOOT_COUNTER_LOCATION);
@@ -22,6 +23,7 @@ void TEMP::Setup()
   pinMode(35,INPUT_PULLUP);
   pinMode(2,OUTPUT);
   pinMode(CS_PIN, OUTPUT);
+  pinMode(CARD_DETECT_PIN,INPUT_PULLUP);
 
   //Start the SPI and the oneWire library for peripheral communication
   spi.begin(CLK_PIN, MISO_PIN, MOSI_PIN, CS_PIN);
@@ -31,28 +33,24 @@ void TEMP::Setup()
   screen.init();
   screen.setRotation(5);
   screen.setTextSize(2);
-  screen.fillScreen(TFT_BLACK);
-  screen.setTextColor(TFT_DARKCYAN);
-  screen.drawString("Temp 0:",0,0,2);
-  screen.drawString("Temp 1:",0,60,2);   
-  sprintf(buffer,"%.2lf",temperatureVal[0]);
-  String tempString0(buffer);
-  sprintf(buffer,"%.2lf",temperatureVal[1]);
-  String tempString1(buffer);
-  screen.drawString("N/A",0,30,2);
-  screen.drawString("N/A",0,90,2);
-  screen.drawString("Start -->",130,0,2);
-  screen.drawString("End  -->",130,100,2);
   if(!digitalRead(0) && !digitalRead(35)) resetBootCounter();
+  flashSDWarning();
+  mainScreen();
 }
 
 void TEMP::Loop()
 { 
-  //Use button 35 to start, button 0 to stop. Button 35 is by the power switch
   buttonState = digitalRead(35);
   offButtonState = digitalRead(0);
 
+  if(!sdCardIsInserted())
+  {
+    flashSDWarning();
+    mainScreen();
+  }
+
   if(!prevOffButtonState && buttonState && isRunning) endLogging(500);
+
   if((!prevButtonState && buttonState) || isRunning)
   { 
     if(!isRunning) 
@@ -63,10 +61,12 @@ void TEMP::Loop()
       screen.drawString("Generating",0,0,2);
       screen.drawString (fileString,0,30,2);
       screen.drawBitmap(120,0,csvImg,120,135,TFT_GREEN);
-      delay(300);
+      delay(1000);
       isRunning = true;
     }
-    displayLoop();
+
+    thermometerLoop();
+
     // Get the temp sensor data
     if (_NextTempMillis <= millis())
     {
@@ -77,16 +77,9 @@ void TEMP::Loop()
         temperatureVal[i] = dtemp.getTempFByIndex(i);
       }
 
-      // put it in the csv file
       tempFile.printf("%ld,", long(_NextTempMillis - READ_WAIT_MS));
       for (int i = 0; i < numberOfSensors; i++)
       { 
-        //Serial.print("Temp ");
-        //Serial.print(i);
-        //Serial.print(" is ");
-        //Serial.print(temperatureVal[i]);
-        //Serial.println("Deg F");
-        //We need to make sure we don't have extra commas
         if(i == numberOfSensors-1) tempFile.printf("%lf", temperatureVal[i]);
         else tempFile.printf("%lf,", temperatureVal[i]);
       }
@@ -97,7 +90,7 @@ void TEMP::Loop()
   prevOffButtonState = offButtonState;
 }
 
-void TEMP::displayLoop()
+void TEMP::thermometerLoop()
 {   
   if(_NextDisplayMillis < millis())
   {
@@ -198,4 +191,39 @@ void TEMP::resetBootCounter()
   screen.drawString("N/A",0,90,2);
   screen.drawString("Start -->",130,0,2);
   screen.drawString("End  -->",130,100,2);
+}
+
+bool TEMP::sdCardIsInserted()
+{
+  return digitalRead(CARD_DETECT_PIN);
+}
+
+void TEMP::flashSDWarning()
+{
+  while(!sdCardIsInserted())
+  {
+    screen.fillScreen(TFT_BLACK);
+    delay(100);
+    screen.setTextColor(TFT_RED);
+    screen.drawString("INSERT",0,0,2);
+    screen.drawString ("SD CARD",0,30,2);
+    screen.drawBitmap(120,0,warningImg,120,135,TFT_RED);
+    delay(100);
+  }
+}
+
+void TEMP::mainScreen()
+{
+    screen.fillScreen(TFT_BLACK);
+    screen.setTextColor(TFT_DARKCYAN);
+    screen.drawString("Temp 0:",0,0,2);
+    screen.drawString("Temp 1:",0,60,2);   
+    sprintf(buffer,"%.2lf",temperatureVal[0]);
+    String tempString0(buffer);
+    sprintf(buffer,"%.2lf",temperatureVal[1]);
+    String tempString1(buffer);
+    screen.drawString("N/A",0,30,2);
+    screen.drawString("N/A",0,90,2);
+    screen.drawString("Start -->",130,0,2);
+    screen.drawString("End  -->",130,100,2);
 }
