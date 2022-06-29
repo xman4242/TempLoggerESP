@@ -1,6 +1,5 @@
 #include "temp.h"
 
-//If something breaks, check the instances of your classes and whatnot
 TEMP::TEMP() : onewire(ONE_WIRE_PIN),
                dtemp(&onewire),
                spi(HSPI),
@@ -59,7 +58,8 @@ void TEMP::Loop()
       screen.fillScreen(TFT_BLACK);
       screen.setTextColor(TFT_GREEN);
       screen.drawString("Generating",0,0,2);
-      screen.drawString (fileString,0,30,2);
+      sprintf(buffer,"/temp%d",numBoot);
+      screen.drawString (buffer,0,30,2);
       screen.drawBitmap(120,0,csvImg,120,135,TFT_GREEN);
       delay(1000);
       isRunning = true;
@@ -111,7 +111,7 @@ void TEMP::thermometerLoop()
 
 void TEMP::makeFileName(char *buffer, int *value)
 {
-  sprintf(buffer, "/t%d.csv", *value);
+  sprintf(buffer, "/temp%d.csv", *value);
 }
 
 void TEMP::initFile()
