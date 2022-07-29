@@ -8,7 +8,7 @@ TEMP::TEMP() : onewire(ONE_WIRE_PIN),
                
 {
 }
-
+//TODO: Make the device save in between recordings. 
 void TEMP::Setup()
 {  
   
