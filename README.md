@@ -4,7 +4,7 @@
 <h4>This is a project to log the temperature from 2 probes, as well as the GPS time, date, and location into a csv file. </h4>
 
 
-<h4>The instructions to use the device are as follows:</h4>	
+<h3>The instructions to use the device are as follows:</h3>	
 
   1. Power the logger with the USB-C port built into the device. A USB power bank is also suitable. 
   2. Insert a FAT-32 formatted microSD card. A day of logging will produce a few megabytes of data at most, so size is not a big issue. 
@@ -16,5 +16,5 @@
   8. The CSV files can now be processed in excel or another suitable program. 
 
 How to Update the Code:
-  The
+  
   
