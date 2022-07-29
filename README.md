@@ -27,5 +27,10 @@
   8. Reopen VS Code, navigate to File->Open Folder, and select the folder you just created. 
   9. **Ensure that the file `platformio.ini` is in the root of this folder, or VS Code won't see it!**
   10. You are now ready to code in C++ using Platformio. 
-  11. If you are unfamiliar with this tool, I would advise reading some documentation at the [PlatformIO homepage](https://docs.platformio.org/en/latest/).
+  11. If you are not familiar with this tool, I would advise reading some of the fantastic documentation at the [PlatformIO homepage](https://docs.platformio.org/en/latest/).
   
+<h2>How to Make the Hardware<h2>
+
+  1. The schematics for this project are in the repository in the form of Eagle files and images. 
+  2. Using the wiring diagram and parts list, this device can be built on a solderless breadboard, perfboard, or similar. 
+  3. PCBs can also be ordered and asembled by hand from the given eagle files or gerber files. 
