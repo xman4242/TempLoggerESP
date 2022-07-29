@@ -32,6 +32,6 @@
   
 <h2>How to Make the Hardware<h2>
 
-  1. The schematics for this project are in the repository in the form of Eagle files and images. 
+  1. The schematics for this project are in the repository in the form of Eagle files and images, in the `schematic` folder 
   2. Using the wiring diagram and parts list, this device can be built on a solderless breadboard, perfboard, or similar. 
   3. PCBs can also be ordered and asembled by hand from the given eagle files or gerber files. 
