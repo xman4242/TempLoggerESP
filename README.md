@@ -3,10 +3,9 @@
 
 <h4>This is a project to log the temperature from 2 probes, as well as the GPS time, date, and location into a csv file. </h4>
 
-<h4>Heading level 4</h4>
 
+<h4>The instructions to use the device are as follows:</h4>	
 
-#The instructions to use the device are as follows:
   1. Power the logger with the USB-C port built into the device. A USB power bank is also suitable. 
   2. Insert a FAT-32 formatted microSD card. A day of logging will produce a few megabytes of data at most, so size is not a big issue. 
   3. Press the "Setup" (lower) button and follow the instructions to set the time on the device. If there is a GPS connection, the current time with the calculated offset is displayed. This offset is needed because GPS devices report time in UTC, which is the time zone around longitude 0. 
