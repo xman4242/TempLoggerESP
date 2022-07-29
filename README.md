@@ -30,7 +30,7 @@
   10. You are now ready to code in C++ using Platformio. 
   11. If you are not familiar with this tool, I would advise reading some of the fantastic documentation at the [PlatformIO homepage](https://docs.platformio.org/en/latest/).
   
-<h2>How to Make the Hardware<h2>
+<h2>How to Make the Hardware</h2>
 
   1. The schematics for this project are in the repository in the form of Eagle files and images, in the `schematic` folder 
   2. Using the wiring diagram and parts list, this device can be built on a solderless breadboard, perfboard, or similar. 
