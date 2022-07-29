@@ -18,7 +18,7 @@
 <h2>How to Update the Code</h2>	
 
   1. This whole project is written in C++, using the arduino framework. 
-  2. Platform IO is the easiest way to deal with this type of program, so we will install it into VS Code. If you do not have VS Code on your device, install it before continuing. 
+  2. Platform IO is the best way to deal with this code, so we will install it into VS Code. If you do not have VS Code on your device, install it before continuing. 
   3. Go to [this link](https://docs.platformio.org/en/latest/integration/ide/vscode.html#installation) and complete step 1.
   4. Close VS Code.
   5. Open a new terminal window and navigate to the desired location.
@@ -27,4 +27,5 @@
   8. Reopen VS Code, navigate to File->Open Folder, and select the folder you just created. 
   9. **Ensure that the file `platformio.ini` is in the root of this folder, or VS Code won't see it!**
   10. You are now ready to code in C++ using Platformio. 
+  11. If you are unfamiliar with this tool, I would advise reading some documentation at the [PlatformIO homepage](https://docs.platformio.org/en/latest/).
   
