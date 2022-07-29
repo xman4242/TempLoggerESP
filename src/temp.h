@@ -22,7 +22,6 @@
 #define CARD_DETECT_PIN 32 //High when the SD card is in
 #define GPS_RX 13
 #define GPS_TX 21
-//#define SD_CS 15
 //CONFIG OPTIONS
 #define EEPROM_BOOT_COUNTER_LOCATION 0
 #define EEPROM_TIME_OFFSET_LOCATION 1
