@@ -3,7 +3,9 @@
 TEMP::TEMP() : onewire(ONE_WIRE_PIN),
                dtemp(&onewire),
                spi(HSPI),
-               screen()
+               screen(),
+               gpsSerial(2)
+               
 {
 }
 
@@ -14,9 +16,12 @@ void TEMP::Setup()
   EEPROM.begin(sizeof(int));
   numBoot = EEPROM.read(EEPROM_BOOT_COUNTER_LOCATION);
   numBoot++;
+  if(numBoot > 99) numBoot = 0;
   EEPROM.write(EEPROM_BOOT_COUNTER_LOCATION, numBoot);
+  utcOffset = EEPROM.read(EEPROM_TIME_OFFSET_LOCATION);
   EEPROM.commit();
-
+  //GPS Serial Start, we use hardware serial because its faster
+  gpsSerial.begin(9600, SERIAL_8N1, GPS_TX, GPS_RX);
   //Buttons are GPIO 0 and GPIO 35, init them here. They are active low. 
   pinMode(0,INPUT_PULLUP);
   pinMode(35,INPUT_PULLUP);
@@ -24,7 +29,7 @@ void TEMP::Setup()
   pinMode(CS_PIN, OUTPUT);
   pinMode(CARD_DETECT_PIN,INPUT_PULLUP);
 
-  //Start the SPI and the oneWire library for peripheral communication
+  //Start the SPI and the oneWire library for SD card and the Temp Sensors
   spi.begin(CLK_PIN, MISO_PIN, MOSI_PIN, CS_PIN);
   dtemp.begin();
 
@@ -47,12 +52,62 @@ void TEMP::Loop()
     flashSDWarning();
     mainScreen();
   }
-
+  //Here is all the code for the setup menus
+  if((prevOffButtonState && !offButtonState && !isRunning) || inSetup)
+  { 
+    if(firstSetup)
+    { 
+      firstSetup = false;
+      inSetup = true;
+      screen.fillScreen(TFT_BLACK);
+      screen.setTextColor(TFT_YELLOW);
+      sprintf(buffer,"UTC Offset is: %2i",utcOffset);
+      screen.drawString(buffer,0,0,2);
+      screen.drawString("Up to increment",0,30,2);
+      screen.drawString("Down to Save",0,60,2);
+      if(hour() == 0) screen.drawString("No GPS Signal",0,90,2);
+      else
+      {
+        screen.drawString(formattedHour() + ":" + formattedMin(),0,90,2);
+      }
+      utcOffset--;
+    }
+    
+    if(prevOffButtonState && !offButtonState)
+    { 
+      if(utcOffset >= 24) utcOffset = 0;
+      else 
+      {
+        utcOffset++;
+      }
+      screen.fillScreen(TFT_BLACK);
+      screen.setTextColor(TFT_YELLOW);
+      sprintf(buffer,"UTC Offset is: %i",utcOffset);
+      screen.drawString(buffer,0,0,2);
+      screen.drawString("Down to increment",0,30,2);
+      screen.drawString("Up to Save",0,60,2);
+      if(hour() == 0) screen.drawString("No GPS Signal",0,90,2);
+      else
+      {
+        screen.drawString(formattedHour() + ":" + formattedMin(),0,90,2);
+      }
+      delay(100);
+    }
+    if(prevButtonState && !buttonState)
+    { 
+      EEPROM.write(EEPROM_TIME_OFFSET_LOCATION, utcOffset);
+      EEPROM.commit();
+      inSetup = false;
+      ESP.restart();
+    }
+  } 
+  //If the bottom button is pressed while we are logging, we stop logging
   if(!prevOffButtonState && buttonState && isRunning) endLogging(500);
 
-  if((!prevButtonState && buttonState) || isRunning)
+  //The default screen that displays the temp while logging
+  if((!prevButtonState && buttonState && !inSetup) || isRunning)
   { 
-    if(!isRunning) 
+    if(!isRunning)
     {  
       initFile();
       screen.fillScreen(TFT_BLACK);
@@ -65,8 +120,6 @@ void TEMP::Loop()
       isRunning = true;
     }
 
-    thermometerLoop();
-
     // Get the temp sensor data
     if (_NextTempMillis <= millis())
     {
@@ -77,12 +130,17 @@ void TEMP::Loop()
         temperatureVal[i] = dtemp.getTempFByIndex(i);
       }
 
-      tempFile.printf("%ld,", long(_NextTempMillis - READ_WAIT_MS));
+      tempFile.printf("%ld,", long((_NextTempMillis - READ_WAIT_MS)/1000));
       for (int i = 0; i < numberOfSensors; i++)
       { 
         if(i == numberOfSensors-1) tempFile.printf("%lf", temperatureVal[i]);
         else tempFile.printf("%lf,", temperatureVal[i]);
       }
+      thermometerLoop();
+      tempFile.printf(",%s:%s:%s",formattedHour(),formattedMin(),formattedSec());
+      tempFile.printf(",%i/%i/%i",month(),day(),year());
+      tempFile.printf(",%f",flat);
+      tempFile.printf(",%f",flon);
       tempFile.printf("\n");
     }
   }
@@ -90,6 +148,7 @@ void TEMP::Loop()
   prevOffButtonState = offButtonState;
 }
 
+//This is the display code for the thermometer image and temp
 void TEMP::thermometerLoop()
 {   
   if(_NextDisplayMillis < millis())
@@ -105,10 +164,42 @@ void TEMP::thermometerLoop()
     String tempString1(buffer);
     screen.drawString(tempString0,0,30,2);
     screen.drawString(tempString1,0,90,2);
-    screen.drawBitmap(120,0,img,120,135,TFT_RED);
+    screen.drawBitmap(120,0,thermometer,120,115,TFT_RED);
+    screen.drawString("Stop -->",125,100,2);
   }
 }
 
+//Here is where we retrive and process the GPS data
+void TEMP::gpsLoop()
+{ 
+  bool newData = false;
+
+  for (unsigned long start = millis(); millis() - start < 1000;)
+  {
+    while (gpsSerial.available())
+    {
+      char c = gpsSerial.read();
+      if (gps.encode(c)) 
+        newData = true;
+    }
+  }
+  
+  if (newData)
+  { 
+    Serial.println("New Data Recived");
+
+    gps.crack_datetime(&Year, &Month, &Day, &Hour, &Minute, &Second, &Hundredths, &age);
+    if (age < 500) 
+    {
+      // set the Time to the latest GPS reading
+      setTime(Hour, Minute, Second, Day, Month, Year);
+      adjustTime(-1 * (utcOffset*SECS_PER_HOUR));
+    }
+
+    if (age == TinyGPS::GPS_INVALID_AGE) Serial.print("Invalid Age!");
+    gps.f_get_position(&flat, &flon, &age);
+  }
+}
 void TEMP::makeFileName(char *buffer, int *value)
 {
   sprintf(buffer, "/temp%d.csv", *value);
@@ -126,21 +217,23 @@ void TEMP::initFile()
     screen.drawBitmap(120,0,sdImg,120,135,TFT_YELLOW);
     delay(100); 
   }
-  //if (!SD.begin(CS_PIN, spi,80000000)) Serial.println("SD Init Failed, try again");
-  //else Serial.println("SD Init Success!");
-  
+
   // Only one file can be open at a time, and make sure we don't do a bad thing
   Serial.println("Generating file header....");
   makeFileName(fileString, &numBoot);
 
   tempFile = SD.open(fileString, FILE_WRITE);
-  tempFile.printf("Millis Since Start,");
+  tempFile.printf("Seconds Since Start,");
 
   for (int i = 0; i < numberOfSensors; i++)
   {
     if(i == numberOfSensors-1) tempFile.printf("Probe %d",i);
     else tempFile.printf("Probe %d,",i);
   }
+  tempFile.printf(",GPS Time");
+  tempFile.printf(",GPS Date");
+  tempFile.printf(",GPS LAT");
+  tempFile.printf(",GPS LONG");
   tempFile.printf("\n(ms),");
 
   for (int i = 0; i < numberOfSensors; i++)
@@ -148,6 +241,10 @@ void TEMP::initFile()
     if(i == numberOfSensors-1) tempFile.printf("(Deg F)");
     else tempFile.printf("(Deg F),");
   }
+  tempFile.printf(",HH:mm:ss");
+  tempFile.printf(",MM/DD/YYYY");
+  tempFile.printf(",%c",176);
+  tempFile.printf(",%c",176);
   tempFile.printf("\n");
   sprintf(buffer,"File %s has been made, starting the recording...",fileString);
   Serial.println(buffer);
@@ -156,15 +253,15 @@ void TEMP::initFile()
 void TEMP::endLogging(int delayMs)
 { 
   shuttingDown = true;
-  Serial.println("Logging Finished");
-  Serial.println("Closing file");
-  tempFile.close();
-  Serial.println("Shutting Down"); 
   screen.fillScreen(TFT_BLACK);
   screen.setTextColor(TFT_PURPLE);
   screen.drawString("Saving",0,0,2);
   screen.drawString ("File.....",0,30,2);
   screen.drawBitmap(120,0,floppyImg,120,135,TFT_PURPLE);
+  Serial.println("Logging Finished");
+  Serial.println("Closing file");
+  tempFile.close();
+  Serial.println("Shutting Down"); 
   delay(delayMs);
   ESP.restart();
 }
@@ -225,5 +322,50 @@ void TEMP::mainScreen()
     screen.drawString("N/A",0,30,2);
     screen.drawString("N/A",0,90,2);
     screen.drawString("Start -->",130,0,2);
-    screen.drawString("End  -->",130,100,2);
+    screen.drawString("Setup -->",125,100,2);
+}
+
+String TEMP::formattedHour()
+{ 
+  char buffer[30];
+
+  if(hour() < 10)
+  {
+    sprintf(buffer,"0%i",hour());
+  }
+  else
+  {
+    sprintf(buffer,"%i",hour());
+  }
+  return String(buffer);
+}
+
+String TEMP::formattedMin()
+{
+  char buffer[30];
+
+  if(minute() < 10)
+  {
+    sprintf(buffer,"0%i",minute());
+  }
+  else
+  {
+    sprintf(buffer,"%i",minute());
+  }
+  return String(buffer);
+}
+
+String TEMP::formattedSec()
+{
+  char buffer[30];
+
+  if(second() < 10)
+  {
+    sprintf(buffer,"0%i",second());
+  }
+  else
+  {
+    sprintf(buffer,"%i",second());
+  }
+  return String(buffer);
 }
