@@ -66,6 +66,7 @@ class TEMP
     
 
   private:
+			int numFileLines = 0;
       long _NextDisplayMillis = 0;
       long _NextTempMillis = 0;
 			int utcOffset = 0;

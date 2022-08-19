@@ -136,12 +136,19 @@ void TEMP::Loop()
         if(i == numberOfSensors-1) tempFile.printf("%lf", temperatureVal[i]);
         else tempFile.printf("%lf,", temperatureVal[i]);
       }
+    
       thermometerLoop();
       tempFile.printf(",%s:%s:%s",formattedHour(),formattedMin(),formattedSec());
       tempFile.printf(",%i/%i/%i",month(),day(),year());
       tempFile.printf(",%f",flat);
       tempFile.printf(",%f",flon);
       tempFile.printf("\n");
+      //numFileLines++;
+      //Serial.println(numFileLines);
+      //Probably save file here 
+      tempFile.close();
+      tempFile = SD.open(fileString, FILE_APPEND);
+      
     }
   }
   prevButtonState = buttonState;
@@ -223,7 +230,7 @@ void TEMP::initFile()
   makeFileName(fileString, &numBoot);
 
   tempFile = SD.open(fileString, FILE_WRITE);
-  tempFile.printf("Seconds Since Start,");
+  tempFile.printf("Milliseconds Since Start,");
 
   for (int i = 0; i < numberOfSensors; i++)
   {
